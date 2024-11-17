@@ -183,7 +183,7 @@ class TKGProcessor(DataProcessor):
         if not (triple in self.all_triple_dictionary.keys()):
             return False
         if self.in_intervals(time_point, self.all_triple_dictionary[triple]):
-            print(str(triple) + "already exist in the graph.")
+            #print(str(triple) + "already exist in the graph.")
             return True
         return False
 
@@ -201,7 +201,7 @@ class TKGProcessor(DataProcessor):
 
     def create_dictionary(self, path): # Needed for descriptions
         dict = {}
-        print(path)
+      #  print(path)
         with open(path, 'r', encoding="utf-8") as f:
             for line in f:
                 if len(line) == 1:
@@ -336,8 +336,8 @@ class TKGProcessor(DataProcessor):
                     s = int(text_start_time.split("-")[0].replace("#", "0"))
                     e = int(text_end_time.split("-")[0].replace("#", "0"))
                     if s > e:
-                        print("Skipping faulty example in ground_truth_intervals")
-                        print(line)
+                      #  print("Skipping faulty example in ground_truth_intervals")
+                     #  print(line)
                         continue
 
                 if start_time[0] == "#": # Left open
@@ -407,7 +407,7 @@ class TKGProcessor(DataProcessor):
                          break
 
             # Create quadruple and add it to list
-            print("Negative: " +  triple[0] + " " + triple[1] + " " +  triple[2] + " " + str(neg_candidate_time))
+           # print("Negative: " +  triple[0] + " " + triple[1] + " " +  triple[2] + " " + str(neg_candidate_time))
             negative_list.append(QuadrupleExample(guid_number_prefix+"_"+str(i), triple[0], triple[1], triple[2], neg_candidate_time, label=0))
 
         # Return list of negative Quadruples
@@ -420,9 +420,9 @@ class TKGProcessor(DataProcessor):
             tmp_head = random.choice(tmp_ent_list)
             if (tmp_head, triple[1], triple[2]) not in self.triple_dictionary:
                 break
-            print("Found {} in triple dictionary so trying again to corrupt.".format((tmp_head, triple[1], triple[2])))
-        print("Corrupted head...")
-        print(str(tmp_head) + " " + str(triple[1]) + " " + str(triple[2]) + " " + str(timestamp))
+          #  print("Found {} in triple dictionary so trying again to corrupt.".format((tmp_head, triple[1], triple[2])))
+       # print("Corrupted head...")
+       # print(str(tmp_head) + " " + str(triple[1]) + " " + str(triple[2]) + " " + str(timestamp))
         return QuadrupleExample(guid, tmp_head, triple[1], triple[2], timestamp, 0)
 
     def corrupt_tail(self, triple, timestamp, guid):
@@ -432,10 +432,10 @@ class TKGProcessor(DataProcessor):
             tmp_tail = random.choice(tmp_ent_list)
             if (triple[0], triple[1], tmp_tail) not in self.triple_dictionary:
                 break
-            print("Found {} in triple dictionary so trying again to corrupt.".format((triple[1], triple[1], tmp_tail)))
+          #  print("Found {} in triple dictionary so trying again to corrupt.".format((triple[1], triple[1], tmp_tail)))
 
-        print("Corrupted tail...")
-        print(str(triple[0]) + " " + str(triple[1]) + " " + str(tmp_tail) + " " + str(timestamp))
+       # print("Corrupted tail...")
+       # print(str(triple[0]) + " " + str(triple[1]) + " " + str(tmp_tail) + " " + str(timestamp))
         return QuadrupleExample(guid, triple[0], triple[1], tmp_tail, timestamp, 0)
 
     def corrupt_triple(self, triple, timestamp, n, guid_number_prefix):
@@ -559,13 +559,13 @@ class TKGProcessor(DataProcessor):
                 if self.mode == "test":
                     # Check whether this test candidate triple is in train or val set
                     if ((subject_id, predicate_id, object_id) in self.get_triple_dictionary(data_dir, "train")) or ((subject_id, predicate_id, object_id) in self.get_triple_dictionary(data_dir, "valid")) :
-                        print(subject_id + " " + predicate_id + " " + object_id + " is in training set. Filtering out.")
+                     #   print(subject_id + " " + predicate_id + " " + object_id + " is in training set. Filtering out.")
                         continue
 
                 examples.append(
                     QuadrupleExample(guid, subject_id, predicate_id, object_id, timestamp=timestamps[0], label=1))
-                print("###### Example")
-                print(subject_id + " " + predicate_id + " " +  object_id + " " + str(timestamps[0]))
+               # print("###### Example")
+               # print(subject_id + " " + predicate_id + " " +  object_id + " " + str(timestamps[0]))
 
                 #temporal_negatives = self.get_temporal_negatives((subject_id, predicate_id, object_id), timestamps[0], self.n_temporal_neg, time_type, guid)
                 #examples = examples + temporal_negatives
