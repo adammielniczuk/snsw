@@ -12,7 +12,10 @@ import numpy as np
 
 
 def get_first_sentence(text):
-    sentences = nltk.sent_tokenize(text)
+    print(text)
+    #sentences = nltk.sent_tokenize(text)
+    sentences = text.split(".")
+    print(sentences)
     if len(sentences) == 0:
         return ""
     return sentences[0]
@@ -80,7 +83,10 @@ class DataProcessor(object):
 class TKGProcessor(DataProcessor):
     """Processor for temporal knowledge graph data set."""
     def __init__(self, data_dir, task, mode, min_time=0, max_time=0,
-    time_dimension=64, n_temporal_neg=0, n_corrupted_triple=0, number_of_words=15):
+    time_dimension=64, n_temporal_neg=0, n_corrupted_triple=0, number_of_words=15,
+    sentence_encoder_model=None):
+        if sentence_encoder_model is None:
+            raise ValueError("sentence encoder model should not be None")
         self.task = task # tp, lp
         self.mode = mode # train, dev, test
         self.data_dir = data_dir
@@ -106,8 +112,9 @@ class TKGProcessor(DataProcessor):
         self.time_encoder = PositionalEncoder(self.min_time, self.max_time, self.time_dimension)
         #self.lm_encoder = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
         #self.lm_encoder = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
-        self.lm_encoder = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
-
+        #self.lm_encoder = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
+        print("Initialized Encoder")
+        self.lm_encoder  = sentence_encoder_model
         self.embedding_lookup = {} # For feature based approach
         self.triple_embedding_lookup = {}
 
@@ -632,7 +639,12 @@ class TKGProcessor(DataProcessor):
                 triple_text += descs
 
             if (example.subject_id, example.predicate_id, example.object_id) not in triple_embedding_lookup:
+                print("triple text 1 = ", triple_text)
+                print("text length 1 = ", len(triple_text))
                 textual_feature = self.lm_encoder.encode(triple_text)
+                print("textual feature 1 = ", textual_feature)
+                print(type(textual_feature))
+                print(textual_feature.shape)
                 triple_embedding_lookup[(example.subject_id, example.predicate_id, example.object_id)] = textual_feature
 
             else:
@@ -672,7 +684,12 @@ class TKGProcessor(DataProcessor):
             # print(triple_text)
 
             if (example.subject_id, example.predicate_id, example.object_id) not in self.triple_embedding_lookup:
+                print("triple text 2 = ", triple_text)
+                print("text length 2 = ", len(triple_text))
                 triple_encoding = self.lm_encoder.encode(triple_text)
+                print("triple encoding 2 = ", triple_encoding)
+                print(type(triple_encoding))
+                print(triple_encoding.shape)
 
                 self.triple_embedding_lookup[(example.subject_id, example.predicate_id, example.object_id)] = triple_encoding
             else:
