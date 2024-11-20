@@ -12,10 +12,7 @@ import numpy as np
 
 
 def get_first_sentence(text):
-    print(text)
-    #sentences = nltk.sent_tokenize(text)
-    sentences = text.split(".")
-    print(sentences)
+    sentences = nltk.sent_tokenize(text)
     if len(sentences) == 0:
         return ""
     return sentences[0]
@@ -113,7 +110,6 @@ class TKGProcessor(DataProcessor):
         #self.lm_encoder = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
         #self.lm_encoder = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
         #self.lm_encoder = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
-        print("Initialized Encoder")
         self.lm_encoder  = sentence_encoder_model
         self.embedding_lookup = {} # For feature based approach
         self.triple_embedding_lookup = {}
@@ -639,12 +635,7 @@ class TKGProcessor(DataProcessor):
                 triple_text += descs
 
             if (example.subject_id, example.predicate_id, example.object_id) not in triple_embedding_lookup:
-                print("triple text 1 = ", triple_text)
-                print("text length 1 = ", len(triple_text))
                 textual_feature = self.lm_encoder.encode(triple_text)
-                print("textual feature 1 = ", textual_feature)
-                print(type(textual_feature))
-                print(textual_feature.shape)
                 triple_embedding_lookup[(example.subject_id, example.predicate_id, example.object_id)] = textual_feature
 
             else:
@@ -684,13 +675,8 @@ class TKGProcessor(DataProcessor):
             # print(triple_text)
 
             if (example.subject_id, example.predicate_id, example.object_id) not in self.triple_embedding_lookup:
-                print("triple text 2 = ", triple_text)
-                print("text length 2 = ", len(triple_text))
                 triple_encoding = self.lm_encoder.encode(triple_text)
-                print("triple encoding 2 = ", triple_encoding)
-                print(type(triple_encoding))
-                print(triple_encoding.shape)
-
+                
                 self.triple_embedding_lookup[(example.subject_id, example.predicate_id, example.object_id)] = triple_encoding
             else:
                 triple_encoding = self.triple_embedding_lookup[(example.subject_id, example.predicate_id, example.object_id)]
