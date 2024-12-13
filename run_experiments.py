@@ -3,7 +3,7 @@ import subprocess
 from models_dict import Mapped_Models
 import os
 import requests
-import zipfile
+import rarfile
 import shutil
 
 def download_file(url, destination):
@@ -18,18 +18,17 @@ def download_file(url, destination):
         print(f"Failed to download dataset from {url}. HTTP Status Code: {response.status_code}")
         exit(1)
 
-def extract_zip(zip_path, extract_to):
-    """Extract a .zip file to a specified directory."""
-    print(f"Extracting {zip_path} to {extract_to}...")
-    print(zip_path)
-    with zipfile.ZipFile(zip_path, 'r') as zf:
-        zf.extractall(path=extract_to)
+def extract_rar(rar_path, extract_to):
+    """Extract a .rar file to a specified directory."""
+    print(f"Extracting {rar_path} to {extract_to}...")
+    with rarfile.RarFile(rar_path) as rf:
+        rf.extractall(path=extract_to)
     print("Extraction complete.")
 
 def main():
     parser = argparse.ArgumentParser(description="Run experiments and execute time prediction.")
     parser.add_argument("--do_train", action="store_true", help="Whether to perform training.")
-    parser.add_argument("--dataset_link", type=str, default="https://drive.google.com/file/d/1LVXTc5kFyZNscMioX-LC6XkSP07C3LZb/view?usp=sharing", help="Link for the processed dataset.")
+    parser.add_argument("--dataset_link", type=str, default="https://drive.google.com/drive/folders/1uP66nWurssE9Wn-tZdbl4OTECC6o2_ro?usp=sharing", help="Link for the processed dataset.")
     parser.add_argument("--epochs", type=int, default=50, help="Number of epochs for training.")
     parser.add_argument("--batch", type=int, default=1024, help="Batch size.")
     parser.add_argument("--n_temporal_neg", type=int, default=4, help="Number of negative samples for temporal models.")
@@ -45,11 +44,11 @@ def main():
     os.makedirs(str(args.save_to_dir), exist_ok=True)
 
     if not os.path.exists("data/"):
-        zip_file_path = "data.zip"
-        download_file(args.dataset_link, zip_file_path)
+        rar_file_path = "./data.rar"
+        download_file(args.dataset_link, rar_file_path)
         os.makedirs("data", exist_ok=True)
-        extract_zip(zip_file_path, ".")
-        os.remove(zip_file_path)
+        extract_rar(rar_file_path, ".")
+        os.remove(rar_file_path)
 
     datasets_data = [("yago11k", "data/YAGO11k"),
                      ("wikidata", "data/WIKIDATA12k")]
