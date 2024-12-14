@@ -135,7 +135,7 @@ class OpenAIEncoder(BaseEncoder):
 # T5 model
 class T5Encoder(BaseEncoder):
     def __init__(self):
-        self.tokenizer = T5Tokenizer.from_pretrained("t5-small")
+        self.tokenizer = T5Tokenizer.from_pretrained("t5-small", legacy=True)
         self.model = T5Model.from_pretrained("t5-small")
 
     def encode(self, text):

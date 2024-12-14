@@ -116,8 +116,10 @@ class TKGProcessor(DataProcessor):
 
         self.training_entities = self.get_training_entities(data_dir) # Needed for corrupting head or tail
         self.entities = self.get_entities(data_dir) # Needed for link prediction inference
-        if task == "tp":
-            self.all_times_list = range(self.min_time, self.max_time+1)
+
+        self.all_times_list = range(self.min_time, self.max_time+1)  # TODO (SNSW): Review whatever is happening here!
+        #if task == "tp":
+        #    self.all_times_list = range(self.min_time, self.max_time+1)
 
         if task == "lp":
             if mode == "test":
