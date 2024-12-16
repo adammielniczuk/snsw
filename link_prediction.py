@@ -216,7 +216,11 @@ def main():
                          tmp_triple = (tmp_head, test_quadruple_line[1], test_quadruple_line[2])
 
                          if not processor.in_tkg_lp(tmp_triple, test_quadruple_line[3]):
-                             head_corrupt_lines.append((tmp_head, test_quadruple_line[1], test_quadruple_line[2], test_quadruple_line[3], test_quadruple_line[4]))
+                             # TODO (SWSN): Sampling, Finish this
+                             p = 0.75 #Example: This should be a paramteer of a method (class)
+                             q = np.random.rand()
+                             if q < p:
+                                 head_corrupt_lines.append((tmp_head, test_quadruple_line[1], test_quadruple_line[2], test_quadruple_line[3], test_quadruple_line[4]))
                          else:
                              print("The candidate is filtered out.")
 
