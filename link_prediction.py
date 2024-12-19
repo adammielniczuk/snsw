@@ -12,6 +12,7 @@ from data_processor import TKGProcessor
 from torch.utils.data import DataLoader, TensorDataset
 import logging
 from models_dict import Mapped_Models
+from results_logging import log_results
 
 os.environ['CUDA_VISIBLE_DEVICES']= '0'
 
@@ -29,6 +30,10 @@ def main():
                          help='input batch size for testing (default: 1000)')
      parser.add_argument('--epochs', type=int, default=50, metavar='N',
                          help='number of epochs to train (default: 14)')
+     parser.add_argument("--sampling", type=float, default=0.5,
+                         help="Percantage of examples to sample.")
+     parser.add_argument("--results_save_dir", type=str, default="./Experiments_Results",
+                         help="Where the results should be saved")
      parser.add_argument('--lr', type=float, default=0.1, metavar='LR',
                          help='learning rate (default: 0.1)')
      parser.add_argument('--margin', type=float, default=2,
@@ -160,6 +165,7 @@ def main():
 
              losses.append(loss.item())
              print("epoch {}\tloss : {}".format(i,loss))
+             log_results("epoch {}\tloss : {}".format(i,loss), str(args.results_save_dir))
 
              if args.save_model:
                  torch.save(model.state_dict(), args.save_to)
@@ -211,16 +217,15 @@ def main():
 
                  head_corrupt_lines = [test_quadruple_line]
 
-                 for tmp_head in processor.entities:
+                 subset_size = int(len(processor.entities) * args.subset)
+                 selected_entities = np.random.choice(processor.entities, subset_size, replace=False)
+
+                 for tmp_head in selected_entities:
                      if tmp_head != test_quadruple_line[0]:
                          tmp_triple = (tmp_head, test_quadruple_line[1], test_quadruple_line[2])
 
                          if not processor.in_tkg_lp(tmp_triple, test_quadruple_line[3]):
-                             # TODO (SWSN): Sampling, Finish this
-                             p = 0.75 #Example: This should be a paramteer of a method (class)
-                             q = np.random.rand()
-                             if q < p:
-                                 head_corrupt_lines.append((tmp_head, test_quadruple_line[1], test_quadruple_line[2], test_quadruple_line[3], test_quadruple_line[4]))
+                             head_corrupt_lines.append((tmp_head, test_quadruple_line[1], test_quadruple_line[2], test_quadruple_line[3], test_quadruple_line[4]))
                          else:
                              print("The candidate is filtered out.")
 
@@ -408,18 +413,16 @@ def main():
          file_prefix += "tn" +str(args.n_temporal_neg) + "_" + "ctn" +str(args.n_corrupted_triple) + "_"
          file_prefix += "td" + str(args.time_dimension) + "_" + "ep" +str(args.epochs) + "_" + "lr" +str(args.lr) + "_" + "mr" + str(args.margin)
 
-         f = open(file_prefix + '_LP.txt','a')
-
          for i in [0,2,9]:
-             f.write('Hits left @{0}: {1}'.format(i+1, np.mean(hits_left[i])))
-             f.write('Hits right @{0}: {1}'.format(i+1, np.mean(hits_right[i])))
-             f.write('Hits @{0}: {1}'.format(i+1, np.mean(hits[i])))
-         f.write('Mean rank left: {0}'.format(np.mean(ranks_left)))
-         f.write('Mean rank right: {0}'.format(np.mean(ranks_right)))
-         f.write('Mean rank: {0}'.format(np.mean(ranks)))
-         f.write('Mean reciprocal rank left: {0}'.format(np.mean(1./np.array(ranks_left))))
-         f.write('Mean reciprocal rank right: {0}'.format(np.mean(1./np.array(ranks_right))))
-         f.write('Mean reciprocal rank: {0}'.format(np.mean(1./np.array(ranks))))
-         f.close()
+             log_results('Hits left @{0}: {1}'.format(i+1, np.mean(hits_left[i])), str(args.results_save_dir))
+             log_results('Hits right @{0}: {1}'.format(i+1, np.mean(hits_right[i])), str(args.results_save_dir))
+             log_results('Hits @{0}: {1}'.format(i+1, np.mean(hits[i])), str(args.results_save_dir))
+
+         log_results('Mean rank left: {0}'.format(np.mean(ranks_left)), str(args.results_save_dir))
+         log_results('Mean rank right: {0}'.format(np.mean(ranks_right)), str(args.results_save_dir))
+         log_results('Mean rank: {0}'.format(np.mean(ranks)), str(args.results_save_dir))
+         log_results('Mean reciprocal rank left: {0}'.format(np.mean(1./np.array(ranks_left))), str(args.results_save_dir))
+         log_results('Mean reciprocal rank right: {0}'.format(np.mean(1./np.array(ranks_right))), str(args.results_save_dir))
+         log_results('Mean reciprocal rank: {0}'.format(np.mean(1./np.array(ranks))), str(args.results_save_dir))
 if __name__ == "__main__":
     main()
