@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import logging
 from models_dict import Mapped_Models
 from results_logging import log_results
+from torch.utils.tensorboard import SummaryWriter
 
 os.environ['CUDA_VISIBLE_DEVICES']= '0'
 
@@ -83,11 +84,13 @@ def main():
                                    help='Number of non-temporal negatives.')
      parser.add_argument('--number_of_words', type=int, default=15, metavar='N',
                                    help='Number of words in the descriptions.')
+     parser.add_argument("--tensorboard_log_dir", type=str, default=None, help="Directory for TensorBoard logs.")
 
 
      args = parser.parse_args()
 
      use_cuda = not args.no_cuda and torch.cuda.is_available()
+     writer = SummaryWriter(log_dir=args.tensorboard_log_dir) if args.tensorboard_log_dir else None
      #torch.manual_seed(args.seed)
      device = torch.device("cuda" if use_cuda else "cpu")
 
@@ -166,9 +169,17 @@ def main():
              losses.append(loss.item())
              print("epoch {}\tloss : {}".format(i,loss))
              log_results("epoch {}\tloss : {}".format(i,loss), str(args.results_save_dir))
+             if writer:
+                 writer.add_scalar('Loss', loss.item(), i)
+                 if i == 0:
+                     writer.add_graph(model, batch)
 
              if args.save_model:
                  torch.save(model.state_dict(), args.save_to)
+         
+         for name, param in model.named_parameters():
+             writer.add_histogram(name, param, i)
+
 
      if args.do_test:
          data_prefix = str(args.data_dir.split("/")[-1]) + "_" + str(args.number_of_words) + "_"
@@ -424,5 +435,9 @@ def main():
          log_results('Mean reciprocal rank left: {0}'.format(np.mean(1./np.array(ranks_left))), str(args.results_save_dir))
          log_results('Mean reciprocal rank right: {0}'.format(np.mean(1./np.array(ranks_right))), str(args.results_save_dir))
          log_results('Mean reciprocal rank: {0}'.format(np.mean(1./np.array(ranks))), str(args.results_save_dir))
+
+     if writer:
+         writer.close()
+
 if __name__ == "__main__":
     main()
