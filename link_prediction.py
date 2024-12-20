@@ -304,7 +304,7 @@ def main():
 
                  tail_corrupt_lines = [test_quadruple_line]
 
-                 for tmp_tail in processor.entities:
+                 for tmp_tail in selected_entities:
                      if tmp_tail != test_quadruple_line[2]:
                          tmp_triple = (test_quadruple_line[0], test_quadruple_line[1], tmp_tail)
                          if not processor.in_tkg_lp(tmp_triple, test_quadruple_line[3]):
