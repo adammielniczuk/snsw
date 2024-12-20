@@ -217,7 +217,7 @@ def main():
 
                  head_corrupt_lines = [test_quadruple_line]
 
-                 subset_size = int(len(processor.entities) * args.subset)
+                 subset_size = int(len(processor.entities) * args.sampling)
                  selected_entities = np.random.choice(processor.entities, subset_size, replace=False)
 
                  for tmp_head in selected_entities:
