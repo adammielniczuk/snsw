@@ -1,0 +1,20 @@
+epoch 0	loss : 1.251180335356478
+epoch 1	loss : 0.29119131188643604
+epoch 2	loss : 0.13094681626872012
+epoch 3	loss : 0.10135903734909861
+epoch 4	loss : 0.09201674503192567
+Hits left @1: 0.11
+Hits right @1: 0.0
+Hits @1: 0.055
+Hits left @3: 0.22
+Hits right @3: 0.0
+Hits @3: 0.11
+Hits left @10: 0.95
+Hits right @10: 0.0
+Hits @10: 0.475
+Mean rank left: 6.02
+Mean rank right: 5285.205
+Mean rank: 2645.6125
+Mean reciprocal rank left: 0.2785127352008157
+Mean reciprocal rank right: 0.0010150419711958058
+Mean reciprocal rank: 0.13976388858600575
