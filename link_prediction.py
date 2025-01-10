@@ -13,6 +13,8 @@ from torch.utils.data import DataLoader, TensorDataset
 import logging
 from models_dict import Mapped_Models
 from results_logging import log_results
+from torch.utils.tensorboard import SummaryWriter
+import random
 
 os.environ['CUDA_VISIBLE_DEVICES']= '0'
 
@@ -83,11 +85,17 @@ def main():
                                    help='Number of non-temporal negatives.')
      parser.add_argument('--number_of_words', type=int, default=15, metavar='N',
                                    help='Number of words in the descriptions.')
+     parser.add_argument("--tensorboard_log_dir", type=str, default=None, help="Directory for TensorBoard logs.")
 
 
      args = parser.parse_args()
 
      use_cuda = not args.no_cuda and torch.cuda.is_available()
+     if args.tensorboard_log_dir is not None:
+        os.makedirs(args.tensorboard_log_dir, exist_ok=True)
+     if args.results_save_dir is not None:
+        os.makedirs(args.results_save_dir, exist_ok=True)
+     writer = SummaryWriter(log_dir=args.tensorboard_log_dir) if args.tensorboard_log_dir else None
      #torch.manual_seed(args.seed)
      device = torch.device("cuda" if use_cuda else "cpu")
 
@@ -130,10 +138,8 @@ def main():
          all_time_encoding = torch.tensor([f.time_encoding for f in train_features])
          all_label = torch.tensor([f.label for f in train_features])
          all_triple_encoding = torch.tensor([f.triple_encoding for f in train_features])
-
          train_data = TensorDatasetWithMoreNegatives(all_time_encoding,
                         all_label, all_triple_encoding, number_of_negatives=processor.n_temporal_neg + processor.n_corrupted_triple)
-
          train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=False)
 
          #########################################
@@ -154,8 +160,8 @@ def main():
                  for k in range(negs_time.shape[1]):
                      neg_time = torch.Tensor(negs_time[:,k,:].float())
 
-                     output1 = model(pos_triple, pos_time)
-                     output2 = model(negs_triple[:,k,:], neg_time)
+                     output1 = model(torch.tensor(pos_triple, dtype=torch.float32), torch.tensor(pos_time, dtype=torch.float32))
+                     output2 = model(torch.tensor(negs_triple[:,k,:], dtype=torch.float32), torch.tensor(neg_time, dtype=torch.float32))
 
                      loss = loss_fn(output1, output2, torch.from_numpy(np.ones(pos_label.shape)).reshape(-1,1).to(device))
 
@@ -166,9 +172,21 @@ def main():
              losses.append(loss.item())
              print("epoch {}\tloss : {}".format(i,loss))
              log_results("epoch {}\tloss : {}".format(i,loss), str(args.results_save_dir))
+             if writer:
+                 writer.add_scalar('Loss', loss.item(), i)
+                 if i == 0:
+                     graph_input_1 = torch.cat((torch.tensor(pos_triple, dtype=torch.float32), torch.tensor(negs_triple[:,k,:], dtype=torch.float32)), dim=0)
+                     graph_input_2 = torch.cat((torch.tensor(pos_time, dtype=torch.float32), torch.tensor(neg_time, dtype=torch.float32)), dim=0)
+                     graph_batch = (graph_input_1, graph_input_2)
+                     writer.add_graph(model, graph_batch)
 
              if args.save_model:
                  torch.save(model.state_dict(), args.save_to)
+         
+         for name, param in model.named_parameters():
+             if args.tensorboard_log_dir:
+                writer.add_histogram(name, param, i)
+
 
      if args.do_test:
          data_prefix = str(args.data_dir.split("/")[-1]) + "_" + str(args.number_of_words) + "_"
@@ -200,9 +218,10 @@ def main():
 
          test_quadruples_lines = processor._read_tsv(os.path.join(args.data_dir, "test.txt"))
 
-        # Time-aware filtering
-         for (i,test_quadruple_line) in enumerate(test_quadruples_lines):
-
+         # Time-aware filtering
+         sampled_test_quadruples_lines = random.sample(test_quadruples_lines, 100) #it will not do it on time otherwise
+         for (i,test_quadruple_line) in enumerate(sampled_test_quadruples_lines):
+             print(f"Progress {i}/{len(sampled_test_quadruples_lines)}")
              #######################################################################################################################################
              time_interval = processor.interval_from_text(test_quadruple_line[3], test_quadruple_line[4])
 
@@ -218,6 +237,7 @@ def main():
                  head_corrupt_lines = [test_quadruple_line]
 
                  subset_size = int(len(processor.entities) * args.sampling)
+                 print(f"Genrated Subset Size: {subset_size}")
                  selected_entities = np.random.choice(processor.entities, subset_size, replace=False)
 
                  for tmp_head in selected_entities:
@@ -270,9 +290,6 @@ def main():
                  rel_values = np.array(preds)
                  rel_values = torch.tensor(rel_values)
 
-                 print("Predictions and the shape:")
-                 print(rel_values, rel_values.shape)
-
                  #####
                  _, argsort1 = torch.sort(rel_values[0,:,0], descending=True)
                  rank_time_point = np.where(argsort1 == 0)[0][0]
@@ -304,7 +321,7 @@ def main():
 
                  tail_corrupt_lines = [test_quadruple_line]
 
-                 for tmp_tail in selected_entities:
+                 for tmp_tail in processor.entities:
                      if tmp_tail != test_quadruple_line[2]:
                          tmp_triple = (test_quadruple_line[0], test_quadruple_line[1], tmp_tail)
                          if not processor.in_tkg_lp(tmp_triple, test_quadruple_line[3]):
@@ -349,12 +366,9 @@ def main():
                              batch_logits = logits.detach().cpu().numpy()
                              preds[0] = np.append(preds[0], batch_logits, axis=0)
 
-                 print(preds)
 
                  rel_values = np.array(preds)
                  rel_values = torch.tensor(rel_values)
-
-                 print(rel_values, rel_values.shape)
 
                  #####
                  _, argsort1 = torch.sort(rel_values[0,:,0], descending=True)
@@ -424,5 +438,9 @@ def main():
          log_results('Mean reciprocal rank left: {0}'.format(np.mean(1./np.array(ranks_left))), str(args.results_save_dir))
          log_results('Mean reciprocal rank right: {0}'.format(np.mean(1./np.array(ranks_right))), str(args.results_save_dir))
          log_results('Mean reciprocal rank: {0}'.format(np.mean(1./np.array(ranks))), str(args.results_save_dir))
+
+     if writer:
+         writer.close()
+
 if __name__ == "__main__":
     main()

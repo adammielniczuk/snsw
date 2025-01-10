@@ -1,3 +1,5 @@
+import os
+
 def log_results(value, file_path):
     """
     Append the given value to the specified file. If the file does not exist, create it.
@@ -7,7 +9,8 @@ def log_results(value, file_path):
         file_path (str): The path to the file where the value should be logged.
     """
     try:
-        with open(file_path, 'a') as file:
+        complete_file_path = os.path.join(file_path, "results.txt")
+        with open(complete_file_path, 'a') as file:
             file.write(value + '\n')
-    except Exception as e:
-        print(f"An error occurred while logging to the file: {e}")
+    except:
+        print("Error occured while saving to a file")

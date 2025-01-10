@@ -6,6 +6,8 @@ import requests
 import rarfile
 import shutil
 import sys
+from torch.utils.tensorboard import SummaryWriter
+import datetime
 
 def main():
     parser = argparse.ArgumentParser(description="Run experiments and execute time prediction.")
@@ -15,6 +17,7 @@ def main():
     parser.add_argument("--epochs", type=int, default=50, help="Number of epochs for training.")
     parser.add_argument("--sampling", type=float, default=0.5, help="Percantage of examples to sample.")
     parser.add_argument("--results_save_dir", type=str, default="./Experiments_Results", help="Where the results should be saved")
+    parser.add_argument("--tensorboard", type=bool, default=False, help="If tensorboard logging should be used.")
     parser.add_argument("--batch", type=int, default=1024, help="Batch size.")
     parser.add_argument("--n_temporal_neg", type=int, default=4, help="Number of negative samples for temporal models.")
     parser.add_argument("--do_test", action="store_true", help="Whether to perform testing.")
@@ -30,6 +33,10 @@ def main():
     os.makedirs(str(args.results_save_dir), exist_ok=True)
 
     for current_embedding_model in Mapped_Models.keys():
+        timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+        if bool(args.tensorboard):
+            log_dir = os.path.join(str(args.results_save_dir), "logs", f"{current_embedding_model}_{timestamp}")
+            os.makedirs(log_dir, exist_ok=True)
         results_path = os.path.join(str(args.results_save_dir), f"{current_embedding_model}_results.txt")
         model_save_path = os.path.join(str(args.save_to_dir), current_embedding_model, f"{args.dataset_name}.pth")
         command = [
@@ -59,6 +66,8 @@ def main():
             command.extend(["--margin", str(args.margin)])
         if args.use_descriptions:
             command.append("--use_descriptions")
+        if bool(args.tensorboard):
+            command.extend(["--tensorboard_log_dir", log_dir])
 
         print(f"Training Model: {current_embedding_model}")
         print("Executing:", " ".join(command))

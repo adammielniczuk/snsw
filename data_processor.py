@@ -9,7 +9,7 @@ from time_encoder import PositionalEncoder
 from collections import defaultdict
 import nltk
 import numpy as np
-
+nltk.download("punkt_tab")
 
 def get_first_sentence(text):
     sentences = nltk.sent_tokenize(text)
@@ -650,7 +650,6 @@ class TKGProcessor(DataProcessor):
     def convert_examples_to_features(self, examples, use_descriptions=False):
         features = []
         for (ex_index, example) in enumerate(examples):
-
             subject_text = self.get_entity_text(example.subject_id)
 
             predicate_text = self.get_predicate_text(example.predicate_id)
