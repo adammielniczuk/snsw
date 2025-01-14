@@ -22,6 +22,7 @@ Below the links for original dataset given by the authors of the paper, the data
 
 The Repository Structure is as Follows:
 
+```
 root/
 ├── results/                # Directory for storing results (e.g., logs, outputs)
 ├── TEMT/                   # Main module directory (add description if needed)
@@ -39,6 +40,7 @@ root/
 ├── results_logging.py      # Utility functions for logging results
 ├── run_experiments.py      # Script for running experiments
 └── time_encoder.py         # Time encoding utilities
+```
 
 ## Explanation of Key Components
 
@@ -78,10 +80,12 @@ root/
 
 ```bash
 python run_experiments.py --do_train --do_test --data_dir ./data/YAGO11k --dataset_name yago --epochs 50 --sampling 0.01 --results_save_dir ./Experiments_Results --tensorboard True --batch 1024 --n_temporal_neg 1 --lr 0.001 --min_time 0 --max_time 100 --margin 1.0 --save_to_dir Trained_Models --use_descriptions
+```
 
 4. --Or-- to train a single model run this command:
 
 ```bash
 python link_prediction.py --data_dir "./data/inductive/all-triples/YAGO11k" --do_train --epochs 5 --batch_size 1024 --do_test --lr 0.001 --save_model --save_to "ind_yago11k_tp_model.pth" --use_descriptions --min_time -453 --max_time 2844 --n_temporal_neg 1 --embedding_model "all_mpnet_base_v2" --sampling 0.05 --results_save_dir "./yago_results/all_mpnet_base_v2" --tensorboard_log_dir "./yago_mpnet_logs"
+```
 
 5. The results should be present in the specified directories (logs for tensorboard --and-- .txt file for the model training and testing metrics and their values)
